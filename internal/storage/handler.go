@@ -9,17 +9,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type InventoryHandler struct {
-	InventoryService InventoryService
+type StorageHandler struct {
+	StorageService StorageService
 }
 
-func NewInventoryHandler(inventoryService InventoryService) *InventoryHandler {
-	return &InventoryHandler{
-		InventoryService: inventoryService,
+func NewStorageHandler(storageService StorageService) *StorageHandler {
+	return &StorageHandler{
+		StorageService: storageService,
 	}
 }
 
-func (h *InventoryHandler) CreateStorage(c *gin.Context) {
+func (h *StorageHandler) CreateStorage(c *gin.Context) {
 	
 	userID, exists := c.Get(constants.UserID)
 	if !exists {
@@ -41,7 +41,7 @@ func (h *InventoryHandler) CreateStorage(c *gin.Context) {
 	
 	ctx := context.WithValue(c, constants.TokenKey, token)
 
-	storageID, err := h.InventoryService.CreateStorage(ctx, &req, userID.(string))
+	storageID, err := h.StorageService.CreateStorage(ctx, &req, userID.(string))
 	if err != nil {
 		helper.SendError(c, 400, err, helper.ErrInvalidRequest)
 		return
@@ -51,7 +51,7 @@ func (h *InventoryHandler) CreateStorage(c *gin.Context) {
 
 }
 
-func (h *InventoryHandler) GetStoragies(c *gin.Context) {
+func (h *StorageHandler) GetStoragies(c *gin.Context) {
 
 	typeString := c.Query("type")
 
@@ -63,7 +63,7 @@ func (h *InventoryHandler) GetStoragies(c *gin.Context) {
 	
 	ctx := context.WithValue(c, constants.TokenKey, token)
 
-	storagies, err := h.InventoryService.GetStoragies(ctx, typeString)
+	storagies, err := h.StorageService.GetStoragies(ctx, typeString)
 	if err != nil {
 		helper.SendError(c, 400, err, helper.ErrInvalidRequest)
 		return
@@ -73,7 +73,7 @@ func (h *InventoryHandler) GetStoragies(c *gin.Context) {
 
 }
 
-func (h *InventoryHandler) GetStorageByID(c *gin.Context) {
+func (h *StorageHandler) GetStorageByID(c *gin.Context) {
 
 	id := c.Param("id")
 
@@ -85,7 +85,7 @@ func (h *InventoryHandler) GetStorageByID(c *gin.Context) {
 	
 	ctx := context.WithValue(c, constants.TokenKey, token)
 
-	storage, err := h.InventoryService.GetStorageByID(ctx, id)
+	storage, err := h.StorageService.GetStorageByID(ctx, id)
 	if err != nil {
 		helper.SendError(c, 400, err, helper.ErrInvalidRequest)
 		return

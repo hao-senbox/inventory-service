@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"inventory-service/config"
-	"inventory-service/internal/inventory"
+	"inventory-service/internal/storage"
 	"inventory-service/pkg/consul"
 	"inventory-service/pkg/zap"
 	"log"
@@ -64,13 +64,13 @@ func main() {
 	}()
 
 	storageCollection := mongoClient.Database(cfg.MongoDB).Collection("storage")
-	storageRepository := inventory.NewInventoryRepository(storageCollection)
-	storageService := inventory.NewInventoryService(storageRepository)
-	storageHandler := inventory.NewInventoryHandler(storageService)
+	storageRepository := storage.NewStorageRepository(storageCollection)
+	storageService := storage.NewStorageService(storageRepository)
+	storageHandler := storage.NewStorageHandler(storageService)
 
 	r := gin.Default()
 
-	inventory.RegisterRoutes(r, storageHandler)
+	storage.RegisterRoutes(r, storageHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {

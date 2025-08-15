@@ -8,23 +8,23 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type InventoryService interface {
+type StorageService interface {
 	CreateStorage(ctx context.Context, req *CreateStorageRequest, userID string) (string, error)
 	GetStoragies(ctx context.Context, typeString string) ([]*Storage, error)
 	GetStorageByID(ctx context.Context, id string) (*Storage, error)
 }
 
-type inventoryService struct {
-	repository InventoryRepository
+type storageService struct {
+	repository StorageRepository
 }
 
-func NewInventoryService(repository InventoryRepository) InventoryService {
-	return &inventoryService{
+func NewStorageService(repository StorageRepository) StorageService {
+	return &storageService{
 		repository: repository,
 	}
 }
 
-func (s *inventoryService) CreateStorage(ctx context.Context, req *CreateStorageRequest, userID string) (string, error) {
+func (s *storageService) CreateStorage(ctx context.Context, req *CreateStorageRequest, userID string) (string, error) {
 
 	if req.Name == "" {
 		return "", fmt.Errorf("name is required")
@@ -67,7 +67,7 @@ func (s *inventoryService) CreateStorage(ctx context.Context, req *CreateStorage
 	return storageID, nil
 }
 
-func (s *inventoryService) buildLocationHierarchy(ctx context.Context, storage *Storage) error {
+func (s *storageService) buildLocationHierarchy(ctx context.Context, storage *Storage) error {
 
 	if storage.ParentID == nil {
 		storage.Level = 0
@@ -88,11 +88,11 @@ func (s *inventoryService) buildLocationHierarchy(ctx context.Context, storage *
 	return nil
 }
 
-func (s *inventoryService) GetStoragies(ctx context.Context, typeString string) ([]*Storage, error) {
+func (s *storageService) GetStoragies(ctx context.Context, typeString string) ([]*Storage, error) {
 	return s.repository.GetStoragies(ctx, typeString)
 }
 
-func (s *inventoryService) GetStorageByID(ctx context.Context, id string) (*Storage, error) {
+func (s *storageService) GetStorageByID(ctx context.Context, id string) (*Storage, error) {
 
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {

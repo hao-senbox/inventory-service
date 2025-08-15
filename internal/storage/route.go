@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(r *gin.Engine, handler *InventoryHandler) {
+func RegisterRoutes(r *gin.Engine, handler *StorageHandler) {
 	
 	api := r.Group("api/v1") 
 	{

@@ -8,23 +8,23 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type InventoryRepository interface {
+type StorageRepository interface {
 	AddStorage(ctx context.Context, storage *Storage) (string, error)
 	GetStoragies(ctx context.Context, typeString string) ([]*Storage, error)
 	GetStorageByID(ctx context.Context, id *primitive.ObjectID) (*Storage, error)
 }
 
-type inventoryRepository struct {
+type storageRepository struct {
 	storageCollection *mongo.Collection
 }
 
-func NewInventoryRepository(storageCollection *mongo.Collection) InventoryRepository {
-	return &inventoryRepository{
+func NewStorageRepository(storageCollection *mongo.Collection) StorageRepository {
+	return &storageRepository{
 		storageCollection: storageCollection,
 	}
 }
 
-func (r *inventoryRepository) AddStorage(ctx context.Context, storage *Storage) (string, error) {
+func (r *storageRepository) AddStorage(ctx context.Context, storage *Storage) (string, error) {
 
 	result, err := r.storageCollection.InsertOne(ctx, storage)
 	if err != nil {
@@ -36,7 +36,7 @@ func (r *inventoryRepository) AddStorage(ctx context.Context, storage *Storage) 
 	return oid.Hex(), err
 }
 
-func (r *inventoryRepository) GetStorageByID(ctx context.Context, id *primitive.ObjectID) (*Storage, error) {
+func (r *storageRepository) GetStorageByID(ctx context.Context, id *primitive.ObjectID) (*Storage, error) {
 
 	var storage Storage
 
@@ -54,7 +54,7 @@ func (r *inventoryRepository) GetStorageByID(ctx context.Context, id *primitive.
 
 }
 
-func (r *inventoryRepository) GetStoragies(ctx context.Context, typeString string) ([]*Storage, error) {
+func (r *storageRepository) GetStoragies(ctx context.Context, typeString string) ([]*Storage, error) {
 
 	var storagies []*Storage
 	filter := bson.M{
