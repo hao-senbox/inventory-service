@@ -1,4 +1,4 @@
-package inventory
+package storage
 
 import (
 	"inventory-service/internal/middleware"
@@ -10,11 +10,11 @@ func RegisterRoutes(r *gin.Engine, handler *InventoryHandler) {
 	
 	api := r.Group("api/v1") 
 	{
-		location := api.Group("/locations").Use(middleware.Secured())
+		location := api.Group("/storage").Use(middleware.Secured())
 		{
-			location.POST("", handler.CreateLocation)
-			location.GET("", handler.GetLocations)
-			location.GET("/:id", handler.GetLocationByID)
+			location.POST("", handler.CreateStorage)
+			location.GET("", handler.GetStoragies)
+			location.GET("/:id", handler.GetStorageByID)
 		}
 		// inventory := api.Group("/inventory").Use(middleware.Secured())
 		// {

@@ -1,4 +1,4 @@
-package inventory
+package storage
 
 import (
 	"time"
@@ -6,7 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type Locations struct {
+type Storage struct {
 	ID          primitive.ObjectID   `json:"id" bson:"_id"`
 	Name        string               `json:"name" bson:"name"`
 	QRCode      string               `json:"qrcode" bson:"qrcode"`
@@ -41,33 +41,4 @@ type LocationHierarchy struct {
 	ShelfSlotName    string              `bson:"shelf_slot_name" json:"shelf_slot_name"`
 	ShelfSlotBoxID   *primitive.ObjectID `bson:"shelf_slot_box_id,omitempty" json:"shelf_slot_box_id,omitempty"`
 	ShelfSlotBoxName string              `bson:"shelf_slot_box_name" json:"shelf_slot_box_name"`
-}
-
-type InventoryItem struct {
-	ID                primitive.ObjectID `bson:"_id,omitempty" json:"id"`
-	ProductID         string             `bson:"product_id" json:"product_id"`
-	LocationID        primitive.ObjectID `bson:"location_id" json:"location_id"`
-	LocationHierarchy LocationHierarchy  `bson:"location_hierarchy" json:"location_hierarchy"`
-	Quantity          int                `bson:"quantity" json:"quantity"`
-	BatchNumber       string             `bson:"batch_number" json:"batch_number"`
-	ExpiryDate        *time.Time         `bson:"expiry_date,omitempty" json:"expiry_date,omitempty"`
-	CreatedBy         primitive.ObjectID `bson:"created_by" json:"created_by"`
-	CreatedAt         time.Time          `bson:"created_at" json:"created_at"`
-	UpdatedAt         time.Time          `bson:"updated_at" json:"updated_at"`
-	IsActive          bool               `bson:"is_active" json:"is_active"`
-}
-
-type InventoryHistory struct {
-	ID               primitive.ObjectID  `bson:"_id,omitempty" json:"id"`
-	ActionType       string              `bson:"action_type" json:"action_type"` // ADD, MOVE, REMOVE, UPDATE
-	ProductID        string              `bson:"product_id" json:"product_id"`
-	Quantity         int                 `bson:"quantity" json:"quantity"`
-	FromLocationID   *primitive.ObjectID `bson:"from_location_id,omitempty" json:"from_location_id,omitempty"`
-	ToLocationID     *primitive.ObjectID `bson:"to_location_id,omitempty" json:"to_location_id,omitempty"`
-	FromLocationPath string              `bson:"from_location_path" json:"from_location_path"`
-	ToLocationPath   string              `bson:"to_location_path" json:"to_location_path"`
-	PerformedBy      primitive.ObjectID  `bson:"performed_by" json:"performed_by"`
-	PerformedAt      time.Time           `bson:"performed_at" json:"performed_at"`
-	Notes            string              `bson:"notes" json:"notes"`
-	Metadata         map[string]any      `bson:"metadata,omitempty" json:"metadata,omitempty"`
 }

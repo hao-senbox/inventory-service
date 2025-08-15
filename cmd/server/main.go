@@ -63,14 +63,14 @@ func main() {
 		os.Exit(0)
 	}()
 
-	locationCollection := mongoClient.Database(cfg.MongoDB).Collection("locations")
-	locationRepository := inventory.NewInventoryRepository(locationCollection)
-	locationService := inventory.NewInventoryService(locationRepository)
-	locationHandler := inventory.NewInventoryHandler(locationService)
+	storageCollection := mongoClient.Database(cfg.MongoDB).Collection("storage")
+	storageRepository := inventory.NewInventoryRepository(storageCollection)
+	storageService := inventory.NewInventoryService(storageRepository)
+	storageHandler := inventory.NewInventoryHandler(storageService)
 
 	r := gin.Default()
 
-	inventory.RegisterRoutes(r, locationHandler)
+	inventory.RegisterRoutes(r, storageHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {

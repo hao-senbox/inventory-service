@@ -1,4 +1,4 @@
-package inventory
+package storage
 
 import (
 	"context"
@@ -19,7 +19,7 @@ func NewInventoryHandler(inventoryService InventoryService) *InventoryHandler {
 	}
 }
 
-func (h *InventoryHandler) CreateLocation(c *gin.Context) {
+func (h *InventoryHandler) CreateStorage(c *gin.Context) {
 	
 	userID, exists := c.Get(constants.UserID)
 	if !exists {
@@ -27,7 +27,7 @@ func (h *InventoryHandler) CreateLocation(c *gin.Context) {
 		return
 	}
 
-	var req CreateLocationRequest
+	var req CreateStorageRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		helper.SendError(c, 400, err, helper.ErrInvalidRequest)
 		return
@@ -41,17 +41,17 @@ func (h *InventoryHandler) CreateLocation(c *gin.Context) {
 	
 	ctx := context.WithValue(c, constants.TokenKey, token)
 
-	locationID, err := h.InventoryService.CreateLocation(ctx, &req, userID.(string))
+	storageID, err := h.InventoryService.CreateStorage(ctx, &req, userID.(string))
 	if err != nil {
 		helper.SendError(c, 400, err, helper.ErrInvalidRequest)
 		return
 	}
 
-	helper.SendSuccess(c, 200, "Success", locationID)
+	helper.SendSuccess(c, 200, "Success", storageID)
 
 }
 
-func (h *InventoryHandler) GetLocations(c *gin.Context) {
+func (h *InventoryHandler) GetStoragies(c *gin.Context) {
 
 	typeString := c.Query("type")
 
@@ -63,17 +63,17 @@ func (h *InventoryHandler) GetLocations(c *gin.Context) {
 	
 	ctx := context.WithValue(c, constants.TokenKey, token)
 
-	locations, err := h.InventoryService.GetLocations(ctx, typeString)
+	storagies, err := h.InventoryService.GetStoragies(ctx, typeString)
 	if err != nil {
 		helper.SendError(c, 400, err, helper.ErrInvalidRequest)
 		return
 	}
 
-	helper.SendSuccess(c, 200, "Success", locations)
+	helper.SendSuccess(c, 200, "Success", storagies)
 
 }
 
-func (h *InventoryHandler) GetLocationByID(c *gin.Context) {
+func (h *InventoryHandler) GetStorageByID(c *gin.Context) {
 
 	id := c.Param("id")
 
@@ -85,11 +85,11 @@ func (h *InventoryHandler) GetLocationByID(c *gin.Context) {
 	
 	ctx := context.WithValue(c, constants.TokenKey, token)
 
-	location, err := h.InventoryService.GetLocationByID(ctx, id)
+	storage, err := h.InventoryService.GetStorageByID(ctx, id)
 	if err != nil {
 		helper.SendError(c, 400, err, helper.ErrInvalidRequest)
 		return
 	}
 
-	helper.SendSuccess(c, 200, "Success", location)
+	helper.SendSuccess(c, 200, "Success", storage)
 }
