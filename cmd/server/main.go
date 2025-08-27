@@ -13,7 +13,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-
+	consulapi "github.com/hashicorp/consul/api"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -40,8 +40,15 @@ func main() {
 		log.Fatalf("Failed to initialize logger: %v", err)
 	}
 
+	consulConn := consul.NewConsulConn(logger, cfg)
+	consulClient := consulConn.Connect()
+
 	mongoClient, err := connectToMongoDB(cfg.MongoURI)
 	if err != nil {
+		panic(err)
+	}
+
+	if err := waitPassing(consulClient, "product-service", 60*time.Second); err != nil {
 		panic(err)
 	}
 
@@ -50,10 +57,6 @@ func main() {
 			panic(err)
 		}
 	}()
-
-	consulConn := consul.NewConsulConn(logger, cfg)
-	consulClient := consulConn.Connect()
-
 
 	// Handle OS signal để deregister
 	quit := make(chan os.Signal, 1)
@@ -65,6 +68,7 @@ func main() {
 		consulConn.Deregister()
 		os.Exit(0)
 	}()
+
 	productService := product.NewProductService(consulClient)
 	storageCollection := mongoClient.Database(cfg.MongoDB).Collection("storage")
 	storageRepository := storage.NewStorageRepository(storageCollection)
@@ -108,4 +112,16 @@ func connectToMongoDB(uri string) (*mongo.Client, error) {
 
 	log.Println("Successfully connected to MongoDB")
 	return client, nil
+}
+
+func waitPassing(cli *consulapi.Client, name string, timeout time.Duration) error {
+	dl := time.Now().Add(timeout)
+	for time.Now().Before(dl) {
+		entries, _, err := cli.Health().Service(name, "", true, nil)
+		if err == nil && len(entries) > 0 {
+			return nil
+		}
+		time.Sleep(2 * time.Second)
+	}
+	return fmt.Errorf("%s not ready in consul", name)
 }
