@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"inventory-service/config"
 	"inventory-service/internal/location"
 	"inventory-service/internal/product"
@@ -13,8 +14,9 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
-	consulapi "github.com/hashicorp/consul/api"
+
 	"github.com/gin-gonic/gin"
+	consulapi "github.com/hashicorp/consul/api"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
