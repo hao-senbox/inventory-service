@@ -18,8 +18,14 @@ type Location struct {
 	FloorID         primitive.ObjectID   `json:"floor_id" bson:"floor_id"`
 	RoomID          primitive.ObjectID   `json:"room_id" bson:"room_id"`
 	ShelfID         []primitive.ObjectID `json:"shelf_id" bson:"shelf_id"`
+	Products        []Product            `json:"products" bson:"products"`
 	IsActice        bool                 `json:"is_actice" bson:"is_actice"`
 	CreatedBy       string               `json:"created_by" bson:"created_by"`
 	CreatedAt       time.Time            `json:"created_at" bson:"created_at"`
 	UpdatedAt       time.Time            `json:"updated_at" bson:"updated_at"`
 }
+
+type Product struct {
+	ProductID primitive.ObjectID `json:"product_id" bson:"product_id"`
+	Quantity  int                `json:"quantity" bson:"quantity"`
+}	

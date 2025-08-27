@@ -10,7 +10,7 @@ type Storage struct {
 	ID          primitive.ObjectID   `json:"id" bson:"_id"`
 	Name        string               `json:"name" bson:"name"`
 	QRCode      string               `json:"qrcode" bson:"qrcode"`
-	Type        string               `json:"type" bson:"type"`
+	Type        string               `json:"type" bson:"type"` // "warehouse", "building", "floor", "room", "shelf"
 	Description *string              `json:"description" bson:"description"`
 	ImageMain   string               `json:"image_main" bson:"image"`
 	ImageMap    string               `json:"image_map" bson:"image_map"`

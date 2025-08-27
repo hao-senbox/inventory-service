@@ -16,9 +16,5 @@ func RegisterRoutes(r *gin.Engine, handler *StorageHandler) {
 			location.GET("", handler.GetStoragies)
 			location.GET("/:id", handler.GetStorageByID)
 		}
-		// inventory := api.Group("/inventory").Use(middleware.Secured())
-		// {
-		// 	inventory.POST("", handler.AddInventory)
-		// }
 	}
 }

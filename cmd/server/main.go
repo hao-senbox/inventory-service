@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"inventory-service/config"
+	"inventory-service/internal/location"
+	"inventory-service/internal/product"
 	"inventory-service/internal/storage"
 	"inventory-service/pkg/consul"
 	"inventory-service/pkg/zap"
@@ -50,7 +52,8 @@ func main() {
 	}()
 
 	consulConn := consul.NewConsulConn(logger, cfg)
-	consulConn.Connect()
+	consulClient := consulConn.Connect()
+
 
 	// Handle OS signal để deregister
 	quit := make(chan os.Signal, 1)
@@ -62,16 +65,21 @@ func main() {
 		consulConn.Deregister()
 		os.Exit(0)
 	}()
-
+	productService := product.NewProductService(consulClient)
 	storageCollection := mongoClient.Database(cfg.MongoDB).Collection("storage")
 	storageRepository := storage.NewStorageRepository(storageCollection)
 	storageService := storage.NewStorageService(storageRepository)
 	storageHandler := storage.NewStorageHandler(storageService)
 
+	locationCollection := mongoClient.Database(cfg.MongoDB).Collection("location")
+	locationRepository := location.NewLocationRepository(locationCollection)
+	locationService := location.NewLocationService(locationRepository, storageRepository, productService)
+	locationHandler := location.NewLocationHandler(locationService)
+
 	r := gin.Default()
 
 	storage.RegisterRoutes(r, storageHandler)
-
+	location.RegisterRoutes(r, locationHandler)
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8009"
