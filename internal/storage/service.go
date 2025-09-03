@@ -10,7 +10,7 @@ import (
 
 type StorageService interface {
 	CreateStorage(ctx context.Context, req *CreateStorageRequest, userID string) (string, error)
-	GetStoragies(ctx context.Context, typeString string) ([]*Storage, error)
+	GetStoragies(ctx context.Context, typeString string) (map[string][]*Storage, error)
 	GetStorageByID(ctx context.Context, id string) (*Storage, error)
 }
 
@@ -88,7 +88,7 @@ func (s *storageService) buildLocationHierarchy(ctx context.Context, storage *St
 	return nil
 }
 
-func (s *storageService) GetStoragies(ctx context.Context, typeString string) ([]*Storage, error) {
+func (s *storageService) GetStoragies(ctx context.Context, typeString string) (map[string][]*Storage, error) {
 	return s.repository.GetStoragies(ctx, typeString)
 }
 

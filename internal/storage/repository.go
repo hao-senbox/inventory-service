@@ -10,7 +10,7 @@ import (
 
 type StorageRepository interface {
 	AddStorage(ctx context.Context, storage *Storage) (string, error)
-	GetStoragies(ctx context.Context, typeString string) ([]*Storage, error)
+	GetStoragies(ctx context.Context, typeString string) (map[string][]*Storage, error)
 	GetStorageByID(ctx context.Context, id *primitive.ObjectID) (*Storage, error)
 }
 
@@ -54,27 +54,48 @@ func (r *storageRepository) GetStorageByID(ctx context.Context, id *primitive.Ob
 
 }
 
-func (r *storageRepository) GetStoragies(ctx context.Context, typeString string) ([]*Storage, error) {
+func (r *storageRepository) GetStoragies(ctx context.Context, typeString string) (map[string][]*Storage, error) {
 
-	var storagies []*Storage
-	filter := bson.M{
-		"type":      typeString,
-		"is_actice": true,
+	pipeline := mongo.Pipeline{
+		{{Key: "$match", Value: bson.M{"is_actice": true}}},
 	}
 
-	cursor, err := r.storageCollection.Find(ctx, filter)
+	if typeString != "" {
+		pipeline = append(pipeline, bson.D{{Key: "$match", Value: bson.M{"type": typeString}}})
+	}
+
+	pipeline = append(pipeline,
+		bson.D{{Key: "$group", Value: bson.M{
+			"_id":   "$type",
+			"items": bson.M{"$push": "$$ROOT"},
+		}}},
+	)
+
+	cursor, err := r.storageCollection.Aggregate(ctx, pipeline)
 	if err != nil {
 		return nil, err
 	}
+	defer cursor.Close(ctx)
 
+	results := make(map[string][]*Storage)
 	for cursor.Next(ctx) {
-		var storage Storage
-		if err := cursor.Decode(&storage); err != nil {
+		var row struct {
+			ID    string     `bson:"_id"`
+			Items []*Storage `bson:"items"`
+		}
+		if err := cursor.Decode(&row); err != nil {
 			return nil, err
 		}
-		storagies = append(storagies, &storage)
+		results[row.ID] = row.Items
 	}
 
-	return storagies, nil
+	allTypes := []string{"warehouse", "building", "floor", "room", "shelf"}
+	for _, t := range allTypes {
+		if _, ok := results[t]; !ok {
+			results[t] = nil 
+		}
+	}
 
+	return results, nil
 }
+
