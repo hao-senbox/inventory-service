@@ -77,6 +77,15 @@ func (r *storageRepository) GetStoragies(ctx context.Context, typeString string)
 	}
 	defer cursor.Close(ctx)
 
+
+	typeMap := map[string]string{
+		"warehouse": "warehouses",
+		"building":  "buildings",
+		"floor":     "floors",
+		"room":      "rooms",
+		"shelf":     "shelfs",
+	}
+
 	results := make(map[string][]*Storage)
 	for cursor.Next(ctx) {
 		var row struct {
@@ -86,16 +95,23 @@ func (r *storageRepository) GetStoragies(ctx context.Context, typeString string)
 		if err := cursor.Decode(&row); err != nil {
 			return nil, err
 		}
-		results[row.ID] = row.Items
+
+		if plural, ok := typeMap[row.ID]; ok {
+			results[plural] = row.Items
+		} else {
+			results[row.ID] = row.Items
+		}
 	}
 
-	allTypes := []string{"warehouse", "building", "floor", "room", "shelf"}
+	allTypes := []string{"warehouses", "buildings", "floors", "rooms", "shelfs"}
 	for _, t := range allTypes {
 		if _, ok := results[t]; !ok {
-			results[t] = nil 
+			results[t] = []*Storage{}
 		}
 	}
 
 	return results, nil
+	
 }
+
 

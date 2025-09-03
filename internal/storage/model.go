@@ -12,8 +12,8 @@ type Storage struct {
 	QRCode      string               `json:"qrcode" bson:"qrcode"`
 	Type        string               `json:"type" bson:"type"` // "warehouse", "building", "floor", "room", "shelf"
 	Description *string              `json:"description" bson:"description"`
-	ImageMain   string               `json:"image_main" bson:"image"`
-	ImageMap    string               `json:"image_map" bson:"image_map"`
+	ImageMain   string               `json:"main_image" bson:"main_image"`
+	ImageMap    string               `json:"map_image" bson:"map_image"`
 	ParentID    *primitive.ObjectID  `json:"parent_id" bson:"parent_id"`
 	AncestorIDs []primitive.ObjectID `json:"ancestor_ids" bson:"ancestor_ids"`
 	Level       int                  `json:"level" bson:"level"`
