@@ -28,4 +28,4 @@ type Location struct {
 type Product struct {
 	ProductID primitive.ObjectID `json:"product_id" bson:"product_id"`
 	Quantity  int                `json:"quantity" bson:"quantity"`
-}	
+}

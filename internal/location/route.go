@@ -17,6 +17,7 @@ func RegisterRoutes(r *gin.Engine, handler *LocationHandler) {
 			location.PUT("/:id", handler.UpdateLocation)
 			location.DELETE("/:id", handler.DeleteLocation)
 			location.PUT("add-product/:id", handler.AddProductToLocation)
+			location.GET("products/:qrCode", handler.GetProductsByQrCode)
 		}
 	}
 }

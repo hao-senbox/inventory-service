@@ -17,6 +17,7 @@ type LocationService interface {
 	UpdateLocation(ctx context.Context, req *UpdateLocationRequest, id string) error
 	DeleteLocation(ctx context.Context, id string) error
 	AddProductToLocation(ctx context.Context, req *AddProductToLocationRequest, id string) error
+	GetProductsByQrCode(ctx context.Context, qrCode string) ([]*LocationResponse, error)
 }
 
 type locationService struct {
@@ -487,4 +488,8 @@ func (s *locationService) AddProductToLocation(ctx context.Context, req *AddProd
 	}
 
 	return s.repository.AddProductToLocation(ctx, objectID, req.ProductID, req.Quantity)
+}
+
+func (s *locationService) GetProductsByQrCode(ctx context.Context, qrCode string) ([]*LocationResponse, error) {
+	return nil, nil
 }

@@ -32,13 +32,13 @@ func (h *LocationHandler) CreateLocation(c *gin.Context) {
 		helper.SendError(c, 400, fmt.Errorf("user_id not found"), helper.ErrInvalidRequest)
 		return
 	}
-	
+
 	token, exists := c.Get(constants.Token)
 	if !exists {
 		helper.SendError(c, 400, fmt.Errorf("token not found"), helper.ErrInvalidRequest)
 		return
 	}
-	
+
 	ctx := context.WithValue(c, constants.TokenKey, token)
 
 	locationID, err := h.service.CreateLocation(ctx, &req, userID.(string))
@@ -58,7 +58,7 @@ func (h *LocationHandler) GetLocations(c *gin.Context) {
 		helper.SendError(c, 400, fmt.Errorf("token not found"), helper.ErrInvalidRequest)
 		return
 	}
-	
+
 	ctx := context.WithValue(c, constants.TokenKey, token)
 
 	locations, err := h.service.GetLocations(ctx)
@@ -80,7 +80,7 @@ func (h *LocationHandler) GetLocationByID(c *gin.Context) {
 		helper.SendError(c, 400, fmt.Errorf("token not found"), helper.ErrInvalidRequest)
 		return
 	}
-	
+
 	ctx := context.WithValue(c, constants.TokenKey, token)
 
 	location, err := h.service.GetLocationByID(ctx, id)
@@ -108,7 +108,7 @@ func (h *LocationHandler) UpdateLocation(c *gin.Context) {
 		helper.SendError(c, 400, fmt.Errorf("token not found"), helper.ErrInvalidRequest)
 		return
 	}
-	
+
 	ctx := context.WithValue(c, constants.TokenKey, token)
 
 	err := h.service.UpdateLocation(ctx, &req, id)
@@ -130,7 +130,7 @@ func (h *LocationHandler) DeleteLocation(c *gin.Context) {
 		helper.SendError(c, 400, fmt.Errorf("token not found"), helper.ErrInvalidRequest)
 		return
 	}
-	
+
 	ctx := context.WithValue(c, constants.TokenKey, token)
 
 	err := h.service.DeleteLocation(ctx, id)
@@ -140,7 +140,7 @@ func (h *LocationHandler) DeleteLocation(c *gin.Context) {
 	}
 
 	helper.SendSuccess(c, 200, "Delete location successfully", nil)
-	
+
 }
 
 func (h *LocationHandler) AddProductToLocation(c *gin.Context) {
@@ -158,7 +158,7 @@ func (h *LocationHandler) AddProductToLocation(c *gin.Context) {
 		helper.SendError(c, 400, fmt.Errorf("token not found"), helper.ErrInvalidRequest)
 		return
 	}
-	
+
 	ctx := context.WithValue(c, constants.TokenKey, token)
 
 	err := h.service.AddProductToLocation(ctx, &req, id)
@@ -168,5 +168,27 @@ func (h *LocationHandler) AddProductToLocation(c *gin.Context) {
 	}
 
 	helper.SendSuccess(c, 200, "Add product to location successfully", nil)
+
+}
+
+func (h *LocationHandler) GetProductsByQrCode(c *gin.Context) {
+
+	qrCode := c.Param("qrCode")
+
+	token, exists := c.Get(constants.Token)
+	if !exists {
+		helper.SendError(c, 400, fmt.Errorf("token not found"), helper.ErrInvalidRequest)
+		return
+	}
+
+	ctx := context.WithValue(c, constants.TokenKey, token)
+
+	products, err := h.service.GetProductsByQrCode(ctx, qrCode)
+	if err != nil {
+		helper.SendError(c, 400, err, helper.ErrInvalidRequest)
+		return
+	}
+
+	helper.SendSuccess(c, 200, "Get products successfully", products)
 
 }
