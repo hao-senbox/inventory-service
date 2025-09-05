@@ -83,7 +83,7 @@ func (r *storageRepository) GetStoragies(ctx context.Context, typeString string)
 		"building":  "buildings",
 		"floor":     "floors",
 		"room":      "rooms",
-		"shelf":     "shelfs",
+		"shelf":     "shelves",
 	}
 
 	results := make(map[string][]*Storage)
@@ -103,7 +103,7 @@ func (r *storageRepository) GetStoragies(ctx context.Context, typeString string)
 		}
 	}
 
-	allTypes := []string{"warehouses", "buildings", "floors", "rooms", "shelfs"}
+	allTypes := []string{"warehouses", "buildings", "floors", "rooms", "shelves"}
 	for _, t := range allTypes {
 		if _, ok := results[t]; !ok {
 			results[t] = []*Storage{}
