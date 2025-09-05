@@ -6,6 +6,7 @@ type LocationResponse struct {
 	ID              string         `json:"location_id"`
 	LocationName    string         `json:"location_name"`
 	LocationAddress string         `json:"location_address"`
+	QrCode          string         `json:"location_qrcode"`
 	LocationImage   string         `json:"location_image"`
 	LocationMap     string         `json:"location_map"`
 	Warehouse       *WarehouseInfo `json:"warehouse"`

@@ -123,7 +123,7 @@ func (s *locationService) CreateLocation(ctx context.Context, req *CreateLocatio
 }
 
 func (s *locationService) GetLocations(ctx context.Context) ([]*LocationResponse, error) {
-	
+
 	locations, err := s.repository.GetLocations(ctx)
 	if err != nil {
 		return nil, err
@@ -221,6 +221,7 @@ func (s *locationService) GetLocations(ctx context.Context) ([]*LocationResponse
 			LocationAddress: location.LocationAddress,
 			LocationImage:   location.LocationImage,
 			LocationMap:     location.LocationMap,
+			QrCode:          location.LocationQRCode,
 			Warehouse:       warehouseInfo,
 			Building:        buildingInfo,
 			Floor:           floorInfo,
@@ -353,6 +354,7 @@ func (s *locationService) GetLocationByID(ctx context.Context, id string) (*Loca
 		LocationAddress: location.LocationAddress,
 		LocationImage:   location.LocationImage,
 		LocationMap:     location.LocationMap,
+		QrCode:          location.LocationQRCode,
 		Warehouse:       warehouseInfo,
 		Building:        buildingInfo,
 		Floor:           floorInfo,
