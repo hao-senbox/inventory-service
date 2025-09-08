@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"inventory-service/config"
-	"inventory-service/internal/location"
-	"inventory-service/internal/product"
+
+	// "inventory-service/internal/product"
+	shelftype "inventory-service/internal/shelf_type"
 	"inventory-service/internal/storage"
 	"inventory-service/pkg/consul"
 	"inventory-service/pkg/zap"
@@ -71,21 +72,20 @@ func main() {
 		os.Exit(0)
 	}()
 
-	productService := product.NewProductService(consulClient)
+	shelfTypeCollection := mongoClient.Database(cfg.MongoDB).Collection("shelf_type")
+	shelfTypeRepository := shelftype.NewShelfTypeRepository(shelfTypeCollection)
+	shelfTypeService := shelftype.NewShelfTypeService(shelfTypeRepository)
+	shelfTypeHandler := shelftype.NewShelfTypeHandler(shelfTypeService)
+
+	// productService := product.NewProductService(consulClient)
 	storageCollection := mongoClient.Database(cfg.MongoDB).Collection("storage")
 	storageRepository := storage.NewStorageRepository(storageCollection)
-	storageService := storage.NewStorageService(storageRepository)
+	storageService := storage.NewStorageService(storageRepository, shelfTypeRepository)
 	storageHandler := storage.NewStorageHandler(storageService)
 
-	locationCollection := mongoClient.Database(cfg.MongoDB).Collection("location")
-	locationRepository := location.NewLocationRepository(locationCollection)
-	locationService := location.NewLocationService(locationRepository, storageRepository, productService)
-	locationHandler := location.NewLocationHandler(locationService)
-
 	r := gin.Default()
-
+	shelftype.RegisterRoutes(r, shelfTypeHandler)
 	storage.RegisterRoutes(r, storageHandler)
-	location.RegisterRoutes(r, locationHandler)
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8009"

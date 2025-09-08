@@ -11,6 +11,7 @@ import (
 type StorageRepository interface {
 	AddStorage(ctx context.Context, storage *Storage) (string, error)
 	GetStoragies(ctx context.Context, typeString string) (map[string][]*Storage, error)
+	GetAllStoragies(ctx context.Context) ([]*Storage, error)
 	GetStorageByID(ctx context.Context, id *primitive.ObjectID) (*Storage, error)
 }
 
@@ -114,4 +115,25 @@ func (r *storageRepository) GetStoragies(ctx context.Context, typeString string)
 	
 }
 
+func (r *storageRepository) GetAllStoragies(ctx context.Context) ([]*Storage, error) {
 
+	cursor, err := r.storageCollection.Find(ctx, bson.M{"is_actice": true})
+	if err != nil {
+		return nil, err
+	}
+	
+	defer cursor.Close(ctx)
+
+	var storagies []*Storage
+	for cursor.Next(ctx) {
+		var storage Storage
+		err := cursor.Decode(&storage)
+		if err != nil {
+			return nil, err
+		}
+		storagies = append(storagies, &storage)
+	}
+
+	return storagies, nil
+
+}

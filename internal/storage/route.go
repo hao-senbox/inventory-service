@@ -14,6 +14,7 @@ func RegisterRoutes(r *gin.Engine, handler *StorageHandler) {
 		{
 			location.POST("", handler.CreateStorage)
 			location.GET("", handler.GetStoragies)
+			location.GET("/tree", handler.GetStorageTree)
 			location.GET("/:id", handler.GetStorageByID)
 		}
 	}

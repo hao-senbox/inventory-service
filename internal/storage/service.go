@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	shelftype "inventory-service/internal/shelf_type"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -12,19 +13,35 @@ type StorageService interface {
 	CreateStorage(ctx context.Context, req *CreateStorageRequest, userID string) (string, error)
 	GetStoragies(ctx context.Context, typeString string) (map[string][]*Storage, error)
 	GetStorageByID(ctx context.Context, id string) (*Storage, error)
+	GetStorageTree(ctx context.Context) ([]*StorageNodeResponse, error)
 }
 
 type storageService struct {
-	repository StorageRepository
+	repository          StorageRepository
+	shelfTypeRepository shelftype.ShelfTypeRepository
 }
 
-func NewStorageService(repository StorageRepository) StorageService {
+func NewStorageService(repository StorageRepository, shelfTypeRepository shelftype.ShelfTypeRepository) StorageService {
 	return &storageService{
-		repository: repository,
+		repository:          repository,
+		shelfTypeRepository: shelfTypeRepository,
 	}
 }
 
 func (s *storageService) CreateStorage(ctx context.Context, req *CreateStorageRequest, userID string) (string, error) {
+
+	var parentID *primitive.ObjectID
+	var shelfTypeID *primitive.ObjectID
+
+	if req.ParentID != nil {
+		parentIDConvert, err := primitive.ObjectIDFromHex(*req.ParentID)
+		if err != nil {
+			return "", err
+		}
+		parentID = &parentIDConvert
+	} else {
+		parentID = nil
+	}
 
 	if req.Name == "" {
 		return "", fmt.Errorf("name is required")
@@ -34,25 +51,60 @@ func (s *storageService) CreateStorage(ctx context.Context, req *CreateStorageRe
 		return "", fmt.Errorf("type is required")
 	}
 
-	if req.ImageMain == "" {
-		return "", fmt.Errorf("image_main is required")
-	}
+	var storage *Storage
+	ID := primitive.NewObjectID()
+	QRCocde := fmt.Sprintf("SENBOX.ORG[STORAGE]:%s", ID.Hex())
 
-	if req.ImageMap == "" {
-		return "", fmt.Errorf("image_map is required")
-	}
+	if req.ShelfTypeID != nil {
 
-	storage := &Storage{
-		ID:          primitive.NewObjectID(),
-		Name:        req.Name,
-		Type:        req.Type,
-		Description: &req.Description,
-		ImageMain:   req.ImageMain,
-		ImageMap:    req.ImageMap,
-		IsActice:    true,
-		CreatedBy:   userID,
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		ShelfTypeIDConvert, err := primitive.ObjectIDFromHex(*req.ShelfTypeID)
+		if err != nil {
+			return "", err
+		}
+
+		shelfTypeID = &ShelfTypeIDConvert
+
+		shelfType, err := s.shelfTypeRepository.GetShelfTypeByID(ctx, *shelfTypeID)
+		if err != nil {
+			return "", err
+		}
+
+		if shelfType == nil {
+			return "", fmt.Errorf("shelf type not found")
+		}
+
+		storage = &Storage{
+			ID:          ID,
+			Name:        req.Name,
+			Type:        req.Type,
+			QRCode:      QRCocde,
+			Description: &req.Description,
+			ImageMain:   req.ImageMain,
+			ImageMap:    req.ImageMap,
+			ParentID:    parentID,
+			ShelfTypeID: shelfTypeID,
+			Slots:       shelfType.Slot,
+			Levels:      shelfType.Level,
+			IsActice:    true,
+			CreatedBy:   userID,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		}
+	} else {
+		storage = &Storage{
+			ID:          ID,
+			Name:        req.Name,
+			Type:        req.Type,
+			QRCode:      QRCocde,
+			Description: &req.Description,
+			ImageMain:   req.ImageMain,
+			ImageMap:    req.ImageMap,
+			ParentID:    parentID,
+			IsActice:    true,
+			CreatedBy:   userID,
+			CreatedAt:   time.Now(),
+			UpdatedAt:   time.Now(),
+		}
 	}
 
 	if err := s.buildLocationHierarchy(ctx, storage); err != nil {
@@ -100,5 +152,33 @@ func (s *storageService) GetStorageByID(ctx context.Context, id string) (*Storag
 	}
 
 	return s.repository.GetStorageByID(ctx, &objectID)
+
+}
+
+func (s *storageService) GetStorageTree(ctx context.Context) ([]*StorageNodeResponse, error) {
 	
+	storagies, err := s.repository.GetAllStoragies(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	nodeMap := make(map[string]*StorageNodeResponse)
+	for _, storage := range storagies {
+		nodeMap[storage.ID.Hex()] = &StorageNodeResponse{
+			Storage:  *storage,
+			Children: []*StorageNodeResponse{},
+		}
+	}
+
+	var roots []*StorageNodeResponse
+	for _, storage := range storagies {
+		if storage.ParentID == nil {
+			roots = append(roots, nodeMap[storage.ID.Hex()])
+		} else {
+			nodeMap[storage.ParentID.Hex()].Children = append(nodeMap[storage.ParentID.Hex()].Children, nodeMap[storage.ID.Hex()])
+		}
+	}
+
+	return roots, nil
+
 }

@@ -93,3 +93,23 @@ func (h *StorageHandler) GetStorageByID(c *gin.Context) {
 
 	helper.SendSuccess(c, 200, "Success", storage)
 }
+
+func (h *StorageHandler) GetStorageTree(c *gin.Context) {
+
+	token, exists := c.Get(constants.Token)
+	if !exists {
+		helper.SendError(c, 400, fmt.Errorf("token not found"), helper.ErrInvalidRequest)
+		return
+	}
+	
+	ctx := context.WithValue(c, constants.TokenKey, token)
+
+	storageTree, err := h.StorageService.GetStorageTree(ctx)
+	if err != nil {
+		helper.SendError(c, 400, err, helper.ErrInvalidRequest)
+		return
+	}
+
+	helper.SendSuccess(c, 200, "Success", storageTree)
+	
+}
