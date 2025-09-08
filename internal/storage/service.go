@@ -14,6 +14,8 @@ type StorageService interface {
 	GetStoragies(ctx context.Context, typeString string) (map[string][]*Storage, error)
 	GetStorageByID(ctx context.Context, id string) (*Storage, error)
 	GetStorageTree(ctx context.Context) ([]*StorageNodeResponse, error)
+	UpdateStorage(ctx context.Context, id string, req *UpdateStorageRequest) error
+	DeleteStorage(ctx context.Context, id string) error
 }
 
 type storageService struct {
@@ -181,4 +183,93 @@ func (s *storageService) GetStorageTree(ctx context.Context) ([]*StorageNodeResp
 
 	return roots, nil
 
+}
+
+func (s *storageService) UpdateStorage(ctx context.Context, id string, req *UpdateStorageRequest) error {
+
+	if id == "" {
+		return fmt.Errorf("id is required")
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	storage, err := s.repository.GetStorageByID(ctx, &objectID)
+	if err != nil {
+		return err
+	}
+
+	if storage == nil {
+		return fmt.Errorf("storage not found")
+	}
+
+	if req.Name != "" {
+		storage.Name = req.Name
+	}
+	if req.Type != "" {
+		storage.Type = req.Type
+	}
+	if req.Description != nil {
+		storage.Description = req.Description
+	}
+	if req.ImageMain != nil {
+		storage.ImageMain = req.ImageMain
+	}
+	if req.ImageMap != nil {
+		storage.ImageMap = req.ImageMap
+	}
+
+	if req.ParentID != nil {
+		parentID, err := primitive.ObjectIDFromHex(*req.ParentID)
+		if err != nil {
+			return err
+		}
+		storage.ParentID = &parentID
+		if err := s.buildLocationHierarchy(ctx, storage); err != nil {
+			return err
+		}
+	}
+
+	if req.ShelfTypeID != nil {
+		shelfTypeID, err := primitive.ObjectIDFromHex(*req.ShelfTypeID)
+		if err != nil {
+			return err
+		}
+
+		storage.ShelfTypeID = &shelfTypeID
+		shelfType, err := s.shelfTypeRepository.GetShelfTypeByID(ctx, shelfTypeID)
+		if err != nil {
+			return err
+		}
+		if shelfType == nil {
+			return fmt.Errorf("shelf type not found")
+		}
+		storage.Slots = shelfType.Slot
+		storage.Levels = shelfType.Level
+	}
+
+	storage.UpdatedAt = time.Now()
+
+	if err := s.repository.UpdateStorage(ctx, objectID, storage); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *storageService) DeleteStorage(ctx context.Context, id string) error {
+
+	if id == "" {
+		return fmt.Errorf("id is required")
+	}
+
+	objectID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	return s.repository.DeleteStorage(ctx, objectID)
+	
 }

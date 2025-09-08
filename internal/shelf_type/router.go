@@ -14,6 +14,8 @@ func RegisterRoutes(r *gin.Engine, handler *ShelfTypeHandler) {
 			location.POST("", handler.CreateShelfType)
 			location.GET("", handler.GetShelfTypes)
 			location.GET("/:id", handler.GetShelfTypeByID)
+			location.PUT("/:id", handler.UpdateShelfType)
+			location.DELETE("/:id", handler.DeleteShelfType)
 		}
 	}
 }

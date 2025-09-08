@@ -13,6 +13,8 @@ type ShelfTypeRepository interface {
 	CreateShelfType(ctx context.Context, shelfType *ShelfType) (string, error)
 	GetShelfTypes(ctx context.Context) ([]*ShelfType, error)
 	GetShelfTypeByID(ctx context.Context, id primitive.ObjectID) (*ShelfType, error)
+	UpdateShelfType(ctx context.Context, id primitive.ObjectID, shelfType *ShelfType) (error)
+	DeleteShelfType(ctx context.Context, id primitive.ObjectID) error
 }
 
 type shelfTypeRepository struct {
@@ -75,5 +77,31 @@ func (s *shelfTypeRepository) GetShelfTypeByID(ctx context.Context, id primitive
 	}
 
 	return &shelfType, nil
+
+}
+
+func (s *shelfTypeRepository) DeleteShelfType(ctx context.Context, id primitive.ObjectID) error {
+	
+	filter := bson.M{"_id": id}
+
+	_, err := s.collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return err
+	}
+
+	return nil
+	
+}
+
+func (s *shelfTypeRepository) UpdateShelfType(ctx context.Context, id primitive.ObjectID, shelfType *ShelfType) (error) {
+
+	filter := bson.M{"_id": id}
+
+	_, err := s.collection.UpdateOne(ctx, filter, bson.M{"$set": shelfType})
+	if err != nil {
+		return err
+	}
+
+	return nil
 
 }

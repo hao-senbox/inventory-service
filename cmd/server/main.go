@@ -73,13 +73,14 @@ func main() {
 	}()
 
 	shelfTypeCollection := mongoClient.Database(cfg.MongoDB).Collection("shelf_type")
+	storageCollection := mongoClient.Database(cfg.MongoDB).Collection("storage")
 	shelfTypeRepository := shelftype.NewShelfTypeRepository(shelfTypeCollection)
-	shelfTypeService := shelftype.NewShelfTypeService(shelfTypeRepository)
+	storageRepository := storage.NewStorageRepository(storageCollection)
+	
+	shelfTypeService := shelftype.NewShelfTypeService(shelfTypeRepository, storageRepository)
 	shelfTypeHandler := shelftype.NewShelfTypeHandler(shelfTypeService)
 
 	// productService := product.NewProductService(consulClient)
-	storageCollection := mongoClient.Database(cfg.MongoDB).Collection("storage")
-	storageRepository := storage.NewStorageRepository(storageCollection)
 	storageService := storage.NewStorageService(storageRepository, shelfTypeRepository)
 	storageHandler := storage.NewStorageHandler(storageService)
 

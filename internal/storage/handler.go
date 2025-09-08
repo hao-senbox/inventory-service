@@ -47,7 +47,7 @@ func (h *StorageHandler) CreateStorage(c *gin.Context) {
 		return
 	}
 
-	helper.SendSuccess(c, 200, "Success", storageID)
+	helper.SendSuccess(c, 200, "Create Storage successfully", storageID)
 
 }
 
@@ -69,7 +69,7 @@ func (h *StorageHandler) GetStoragies(c *gin.Context) {
 		return
 	}
 
-	helper.SendSuccess(c, 200, "Success", storagies)
+	helper.SendSuccess(c, 200, "Get storagies successfully", storagies)
 
 }
 
@@ -91,7 +91,7 @@ func (h *StorageHandler) GetStorageByID(c *gin.Context) {
 		return
 	}
 
-	helper.SendSuccess(c, 200, "Success", storage)
+	helper.SendSuccess(c, 200, "Get storage successfully", storage)
 }
 
 func (h *StorageHandler) GetStorageTree(c *gin.Context) {
@@ -110,6 +110,57 @@ func (h *StorageHandler) GetStorageTree(c *gin.Context) {
 		return
 	}
 
-	helper.SendSuccess(c, 200, "Success", storageTree)
+	helper.SendSuccess(c, 200, "Get storage tree successfully", storageTree)
+	
+}
+
+func (h *StorageHandler) UpdateStorage(c *gin.Context) {
+
+	id := c.Param("id")
+
+	var req UpdateStorageRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		helper.SendError(c, 400, err, helper.ErrInvalidRequest)
+		return
+	}
+
+	token, exists := c.Get(constants.Token)
+	if !exists {
+		helper.SendError(c, 400, fmt.Errorf("token not found"), helper.ErrInvalidRequest)
+		return
+	}
+	
+	ctx := context.WithValue(c, constants.TokenKey, token)
+
+	err := h.StorageService.UpdateStorage(ctx, id, &req)
+	if err != nil {
+		helper.SendError(c, 400, err, helper.ErrInvalidRequest)
+		return
+	}
+
+	helper.SendSuccess(c, 200, "Update storage successfully", nil)
+
+}
+
+func (h *StorageHandler) DeleteStorage(c *gin.Context) {
+
+	id := c.Param("id")
+
+	token, exists := c.Get(constants.Token)
+	if !exists {
+		helper.SendError(c, 400, fmt.Errorf("token not found"), helper.ErrInvalidRequest)
+		return
+	}
+	
+	ctx := context.WithValue(c, constants.TokenKey, token)
+
+	err := h.StorageService.DeleteStorage(ctx, id)
+	if err != nil {
+		helper.SendError(c, 400, err, helper.ErrInvalidRequest)
+		return
+	}
+
+	helper.SendSuccess(c, 200, "Delete storage successfully", nil)
 	
 }

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"inventory-service/internal/shared/model"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -13,6 +14,9 @@ type StorageRepository interface {
 	GetStoragies(ctx context.Context, typeString string) (map[string][]*Storage, error)
 	GetAllStoragies(ctx context.Context) ([]*Storage, error)
 	GetStorageByID(ctx context.Context, id *primitive.ObjectID) (*Storage, error)
+	GetStorageByShelfID(ctx context.Context, id primitive.ObjectID) ([]*model.Storage, error)
+	UpdateStorage(ctx context.Context, id primitive.ObjectID, storage *Storage) error
+	DeleteStorage(ctx context.Context, id primitive.ObjectID) error
 }
 
 type storageRepository struct {
@@ -132,6 +136,52 @@ func (r *storageRepository) GetAllStoragies(ctx context.Context) ([]*Storage, er
 			return nil, err
 		}
 		storagies = append(storagies, &storage)
+	}
+
+	return storagies, nil
+
+}
+
+func (r *storageRepository) UpdateStorage(ctx context.Context, id primitive.ObjectID, storage *Storage) error {
+
+	_, err := r.storageCollection.UpdateOne(ctx, bson.M{"_id": id}, bson.M{"$set": storage})
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+func (r *storageRepository) DeleteStorage(ctx context.Context, id primitive.ObjectID) error {
+
+	_, err := r.storageCollection.DeleteOne(ctx, bson.M{"_id": id})
+	if err != nil {
+		return err
+	}
+
+	return nil
+	
+}
+
+func (r *storageRepository) GetStorageByShelfID(ctx context.Context, id primitive.ObjectID) ([]*model.Storage, error) {
+
+	var storagies []*model.Storage
+
+	filter := bson.M{"shelf_type_id": id}
+
+	cursor, err := r.storageCollection.Find(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	for cursor.Next(ctx) {
+		var storage *model.Storage
+		err := cursor.Decode(&storage)
+		if err != nil {
+			return nil, err
+		}
+		storagies = append(storagies, storage)
 	}
 
 	return storagies, nil

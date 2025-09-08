@@ -87,3 +87,54 @@ func (h *ShelfTypeHandler) GetShelfTypeByID(c *gin.Context) {
 	helper.SendSuccess(c, 200, "Get shelf type successfully", shelfType)
 
 }
+
+func (h *ShelfTypeHandler) DeleteShelfType(c *gin.Context) {
+
+	id := c.Param("id")
+
+	token, exists := c.Get(constants.Token)
+	if !exists {
+		helper.SendError(c, 400, fmt.Errorf("token not found"), helper.ErrInvalidRequest)
+		return
+	}
+	
+	ctx := context.WithValue(c, constants.TokenKey, token)
+
+	err := h.ShelfTypeService.DeleteShelfType(ctx, id)
+	if err != nil {
+		helper.SendError(c, 400, err, helper.ErrInvalidRequest)
+		return
+	}
+
+	helper.SendSuccess(c, 200, "Delete shelf type successfully", nil)
+
+}
+
+func (h *ShelfTypeHandler) UpdateShelfType(c *gin.Context) {
+
+	id := c.Param("id")
+
+	var req UpdateShelfTypeRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		helper.SendError(c, 400, err, helper.ErrInvalidRequest)
+		return
+	}
+
+	token, exists := c.Get(constants.Token)
+	if !exists {
+		helper.SendError(c, 400, fmt.Errorf("token not found"), helper.ErrInvalidRequest)
+		return
+	}
+	
+	ctx := context.WithValue(c, constants.TokenKey, token)
+
+	err := h.ShelfTypeService.UpdateShelfType(ctx, id, &req)
+	if err != nil {
+		helper.SendError(c, 400, err, helper.ErrInvalidRequest)
+		return
+	}
+
+	helper.SendSuccess(c, 200, "Update shelf type successfully", nil)
+
+}
