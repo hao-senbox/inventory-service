@@ -11,8 +11,8 @@ func RegisterRoutes(r *gin.Engine, handler *ProductPlacementHandler) {
 	{
 		location := api.Group("/product_placement").Use(middleware.Secured())
 		{
-			location.GET("shelf/:id", handler.GetProductPlacementsByShelfID)
-			location.GET("product/:id", handler.GetProductPlacementsByProductID)
+			location.GET("/shelf/:id", handler.GetProductPlacementsByShelfID)
+			location.GET("/product/:id", handler.GetProductPlacementsByProductID)
 		}
 	}
 }
