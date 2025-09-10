@@ -17,6 +17,9 @@ type StorageRepository interface {
 	GetStorageByShelfID(ctx context.Context, id primitive.ObjectID) ([]*model.Storage, error)
 	UpdateStorage(ctx context.Context, id primitive.ObjectID, storage *Storage) error
 	DeleteStorage(ctx context.Context, id primitive.ObjectID) error
+
+	// Update total stock
+	UpdateTotalStock(ctx context.Context, id primitive.ObjectID, totalStock int) error
 }
 
 type storageRepository struct {
@@ -186,4 +189,14 @@ func (r *storageRepository) GetStorageByShelfID(ctx context.Context, id primitiv
 
 	return storagies, nil
 
+}
+
+func (r *storageRepository) UpdateTotalStock(ctx context.Context, id primitive.ObjectID, totalStock int) error {
+
+	_, err := r.storageCollection.UpdateOne(ctx, bson.M{"_id": id}, bson.M{"$set": bson.M{"total_stock": totalStock}})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

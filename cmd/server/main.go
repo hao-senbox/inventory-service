@@ -6,6 +6,8 @@ import (
 	"inventory-service/config"
 
 	// "inventory-service/internal/product"
+	productplacement "inventory-service/internal/product_placement"
+	producttransaction "inventory-service/internal/product_transaction"
 	shelftype "inventory-service/internal/shelf_type"
 	"inventory-service/internal/storage"
 	"inventory-service/pkg/consul"
@@ -74,9 +76,13 @@ func main() {
 
 	shelfTypeCollection := mongoClient.Database(cfg.MongoDB).Collection("shelf_type")
 	storageCollection := mongoClient.Database(cfg.MongoDB).Collection("storage")
+	productTransaction := mongoClient.Database(cfg.MongoDB).Collection("product_transaction")
+	productPlacement := mongoClient.Database(cfg.MongoDB).Collection("product_placement")
 	shelfTypeRepository := shelftype.NewShelfTypeRepository(shelfTypeCollection)
 	storageRepository := storage.NewStorageRepository(storageCollection)
-	
+	productTransactionRepository := producttransaction.NewProductTransactionRepository(productTransaction)
+	productPlacementRepository := productplacement.NewProductPlacementRepository(productPlacement)
+
 	shelfTypeService := shelftype.NewShelfTypeService(shelfTypeRepository, storageRepository)
 	shelfTypeHandler := shelftype.NewShelfTypeHandler(shelfTypeService)
 
@@ -84,9 +90,15 @@ func main() {
 	storageService := storage.NewStorageService(storageRepository, shelfTypeRepository)
 	storageHandler := storage.NewStorageHandler(storageService)
 
+	productPlacementService := productplacement.NewProductPlacementService(productPlacementRepository, storageRepository)
+
+	productTransactionService := producttransaction.NewProductTransactionService(productTransactionRepository, productPlacementService, mongoClient)
+	productTransactionHandler := producttransaction.NewProductTransactionHandler(productTransactionService)
+
 	r := gin.Default()
 	shelftype.RegisterRoutes(r, shelfTypeHandler)
 	storage.RegisterRoutes(r, storageHandler)
+	producttransaction.RegisterRoutes(r, productTransactionHandler)
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8009"

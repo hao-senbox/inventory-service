@@ -38,48 +38,49 @@ func (s *storageService) CreateStorage(ctx context.Context, req *CreateStorageRe
 	if req.ParentID != nil {
 		parentIDConvert, err := primitive.ObjectIDFromHex(*req.ParentID)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("invalid parent id: %w", err)
 		}
 		parentID = &parentIDConvert
-	} else {
-		parentID = nil
 	}
 
 	if req.Name == "" {
 		return "", fmt.Errorf("name is required")
 	}
-
 	if req.Type == "" {
 		return "", fmt.Errorf("type is required")
 	}
 
-	var storage *Storage
 	ID := primitive.NewObjectID()
-	QRCocde := fmt.Sprintf("SENBOX.ORG[STORAGE]:%s", ID.Hex())
+	qrCode := fmt.Sprintf("SENBOX.ORG[STORAGE]:%s", ID.Hex())
+
+	var storage *Storage
 
 	if req.ShelfTypeID != nil {
-
 		ShelfTypeIDConvert, err := primitive.ObjectIDFromHex(*req.ShelfTypeID)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("invalid shelf type id: %w", err)
 		}
-
 		shelfTypeID = &ShelfTypeIDConvert
 
 		shelfType, err := s.shelfTypeRepository.GetShelfTypeByID(ctx, *shelfTypeID)
 		if err != nil {
 			return "", err
 		}
-
 		if shelfType == nil {
 			return "", fmt.Errorf("shelf type not found")
+		}
+
+		var totalStock *int
+		if shelfType.Slot != nil && shelfType.Level != nil {
+			val := (*shelfType.Slot) * (*shelfType.Level)
+			totalStock = &val
 		}
 
 		storage = &Storage{
 			ID:          ID,
 			Name:        req.Name,
 			Type:        req.Type,
-			QRCode:      QRCocde,
+			QRCode:      qrCode,
 			Description: &req.Description,
 			ImageMain:   req.ImageMain,
 			ImageMap:    req.ImageMap,
@@ -87,7 +88,8 @@ func (s *storageService) CreateStorage(ctx context.Context, req *CreateStorageRe
 			ShelfTypeID: shelfTypeID,
 			Slots:       shelfType.Slot,
 			Levels:      shelfType.Level,
-			IsActice:    true,
+			TotalStock:  totalStock,
+			IsActive:    true,
 			CreatedBy:   userID,
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
@@ -97,12 +99,12 @@ func (s *storageService) CreateStorage(ctx context.Context, req *CreateStorageRe
 			ID:          ID,
 			Name:        req.Name,
 			Type:        req.Type,
-			QRCode:      QRCocde,
+			QRCode:      qrCode,
 			Description: &req.Description,
 			ImageMain:   req.ImageMain,
 			ImageMap:    req.ImageMap,
 			ParentID:    parentID,
-			IsActice:    true,
+			IsActive:    true,
 			CreatedBy:   userID,
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
@@ -158,7 +160,7 @@ func (s *storageService) GetStorageByID(ctx context.Context, id string) (*Storag
 }
 
 func (s *storageService) GetStorageTree(ctx context.Context) ([]*StorageNodeResponse, error) {
-	
+
 	storagies, err := s.repository.GetAllStoragies(ctx)
 	if err != nil {
 		return nil, err
@@ -193,7 +195,7 @@ func (s *storageService) UpdateStorage(ctx context.Context, id string, req *Upda
 
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid id: %w", err)
 	}
 
 	storage, err := s.repository.GetStorageByID(ctx, &objectID)
@@ -208,25 +210,33 @@ func (s *storageService) UpdateStorage(ctx context.Context, id string, req *Upda
 	if req.Name != "" {
 		storage.Name = req.Name
 	}
+
 	if req.Type != "" {
 		storage.Type = req.Type
 	}
+
 	if req.Description != nil {
 		storage.Description = req.Description
 	}
+
 	if req.ImageMain != nil {
 		storage.ImageMain = req.ImageMain
 	}
+
 	if req.ImageMap != nil {
 		storage.ImageMap = req.ImageMap
 	}
 
 	if req.ParentID != nil {
-		parentID, err := primitive.ObjectIDFromHex(*req.ParentID)
-		if err != nil {
-			return err
+		if *req.ParentID == "" {
+			storage.ParentID = nil
+		} else {
+			parentID, err := primitive.ObjectIDFromHex(*req.ParentID)
+			if err != nil {
+				return fmt.Errorf("invalid parent id: %w", err)
+			}
+			storage.ParentID = &parentID
 		}
-		storage.ParentID = &parentID
 		if err := s.buildLocationHierarchy(ctx, storage); err != nil {
 			return err
 		}
@@ -235,10 +245,10 @@ func (s *storageService) UpdateStorage(ctx context.Context, id string, req *Upda
 	if req.ShelfTypeID != nil {
 		shelfTypeID, err := primitive.ObjectIDFromHex(*req.ShelfTypeID)
 		if err != nil {
-			return err
+			return fmt.Errorf("invalid shelf type id: %w", err)
 		}
-
 		storage.ShelfTypeID = &shelfTypeID
+
 		shelfType, err := s.shelfTypeRepository.GetShelfTypeByID(ctx, shelfTypeID)
 		if err != nil {
 			return err
@@ -246,8 +256,16 @@ func (s *storageService) UpdateStorage(ctx context.Context, id string, req *Upda
 		if shelfType == nil {
 			return fmt.Errorf("shelf type not found")
 		}
+
+		var totalStock *int
+		if shelfType.Slot != nil && shelfType.Level != nil {
+			val := (*shelfType.Slot) * (*shelfType.Level)
+			totalStock = &val
+		}
+
 		storage.Slots = shelfType.Slot
 		storage.Levels = shelfType.Level
+		storage.TotalStock = totalStock
 	}
 
 	storage.UpdatedAt = time.Now()
@@ -271,5 +289,5 @@ func (s *storageService) DeleteStorage(ctx context.Context, id string) error {
 	}
 
 	return s.repository.DeleteStorage(ctx, objectID)
-	
+
 }

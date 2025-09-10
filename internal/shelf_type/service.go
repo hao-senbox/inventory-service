@@ -13,13 +13,13 @@ type ShelfTypeService interface {
 	CreateShelfType(ctx context.Context, req *CreateShelfTypeRequest) (string, error)
 	GetShelfTypes(ctx context.Context) ([]*ShelfType, error)
 	GetShelfTypeByID(ctx context.Context, id string) (*ShelfType, error)
-	UpdateShelfType(ctx context.Context, id string, req *UpdateShelfTypeRequest) (error)
+	UpdateShelfType(ctx context.Context, id string, req *UpdateShelfTypeRequest) error
 	DeleteShelfType(ctx context.Context, id string) error
 }
 
 type shelfTypeService struct {
 	ShelfTypeRepo ShelfTypeRepository
-	StorageRepo ports.Storage
+	StorageRepo   ports.Storage
 }
 
 func NewShelfTypeService(shelfTypeRepo ShelfTypeRepository, storageRepo ports.Storage) ShelfTypeService {
@@ -31,16 +31,26 @@ func NewShelfTypeService(shelfTypeRepo ShelfTypeRepository, storageRepo ports.St
 
 func (s *shelfTypeService) CreateShelfType(ctx context.Context, req *CreateShelfTypeRequest) (string, error) {
 
+	var stock *int
+
 	if req.Name == "" {
 		return "", fmt.Errorf("name is required")
 	}
-
+	
+	if req.Slot != nil && req.Level != nil {
+		val := (*req.Level) * (*req.Slot)
+		stock = &val
+	} else {
+		stock = nil
+	}
+	
 	shelfType := &ShelfType{
 		ID:        primitive.NewObjectID(),
 		Name:      req.Name,
 		Note:      req.Note,
 		Slot:      req.Slot,
 		Level:     req.Level,
+		Stock:     stock,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -73,7 +83,7 @@ func (s *shelfTypeService) GetShelfTypeByID(ctx context.Context, id string) (*Sh
 
 }
 
-func (s *shelfTypeService) UpdateShelfType(ctx context.Context, id string, req *UpdateShelfTypeRequest) (error) {
+func (s *shelfTypeService) UpdateShelfType(ctx context.Context, id string, req *UpdateShelfTypeRequest) error {
 
 	if id == "" {
 		return fmt.Errorf("id is required")
@@ -116,7 +126,7 @@ func (s *shelfTypeService) UpdateShelfType(ctx context.Context, id string, req *
 }
 
 func (s *shelfTypeService) DeleteShelfType(ctx context.Context, id string) error {
-	
+
 	if id == "" {
 		return fmt.Errorf("id is required")
 	}
@@ -134,7 +144,7 @@ func (s *shelfTypeService) DeleteShelfType(ctx context.Context, id string) error
 	if storagies == nil {
 		return fmt.Errorf("storage type not found")
 	}
-	
+
 	for _, storage := range storagies {
 		err := s.StorageRepo.DeleteStorage(ctx, storage.ID)
 		if err != nil {
