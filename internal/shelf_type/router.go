@@ -7,7 +7,7 @@ import (
 )
 
 func RegisterRoutes(r *gin.Engine, handler *ShelfTypeHandler) {
-	api := r.Group("api/v1") 
+	api := r.Group("api/v1")
 	{
 		location := api.Group("/shelf_type").Use(middleware.Secured())
 		{

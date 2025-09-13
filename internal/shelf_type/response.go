@@ -6,9 +6,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type ShelfType struct {
+type ShelfTypeResponse struct {
 	ID        primitive.ObjectID `json:"id" bson:"_id"`
-	ImageKey  string             `json:"image_key" bson:"image_key"`
+	ImageUrl  string             `json:"image_url" bson:"image_url"`
 	Name      string             `json:"name" bson:"name"`
 	Note      *string            `json:"note" bson:"note"`
 	Slot      *int               `json:"slot" bson:"slot"`

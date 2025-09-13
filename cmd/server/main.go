@@ -11,6 +11,7 @@ import (
 	shelftype "inventory-service/internal/shelf_type"
 	"inventory-service/internal/storage"
 	"inventory-service/pkg/consul"
+	"inventory-service/pkg/uploader"
 	"inventory-service/pkg/zap"
 	"log"
 	"os"
@@ -74,6 +75,8 @@ func main() {
 		os.Exit(0)
 	}()
 
+	imageService := uploader.NewImageService(consulClient)
+
 	shelfTypeCollection := mongoClient.Database(cfg.MongoDB).Collection("shelf_type")
 	storageCollection := mongoClient.Database(cfg.MongoDB).Collection("storage")
 	productTransaction := mongoClient.Database(cfg.MongoDB).Collection("product_transaction")
@@ -83,7 +86,7 @@ func main() {
 	productTransactionRepository := producttransaction.NewProductTransactionRepository(productTransaction)
 	productPlacementRepository := productplacement.NewProductPlacementRepository(productPlacement)
 
-	shelfTypeService := shelftype.NewShelfTypeService(shelfTypeRepository, storageRepository)
+	shelfTypeService := shelftype.NewShelfTypeService(shelfTypeRepository, storageRepository, imageService)
 	shelfTypeHandler := shelftype.NewShelfTypeHandler(shelfTypeService)
 
 	// productService := product.NewProductService(consulClient)
