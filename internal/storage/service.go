@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	shelftype "inventory-service/internal/shelf_type"
+	"inventory-service/pkg/uploader"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -21,12 +22,14 @@ type StorageService interface {
 type storageService struct {
 	repository          StorageRepository
 	shelfTypeRepository shelftype.ShelfTypeRepository
+	ImageService        uploader.ImageService
 }
 
-func NewStorageService(repository StorageRepository, shelfTypeRepository shelftype.ShelfTypeRepository) StorageService {
+func NewStorageService(repository StorageRepository, shelfTypeRepository shelftype.ShelfTypeRepository, imageService uploader.ImageService) StorageService {
 	return &storageService{
 		repository:          repository,
 		shelfTypeRepository: shelfTypeRepository,
+		ImageService:        imageService,
 	}
 }
 
@@ -160,17 +163,35 @@ func (s *storageService) GetStorageByID(ctx context.Context, id string) (*Storag
 }
 
 func (s *storageService) GetStorageTree(ctx context.Context) ([]*StorageNodeResponse, error) {
-
 	storagies, err := s.repository.GetAllStoragies(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	nodeMap := make(map[string]*StorageNodeResponse)
+
 	for _, storage := range storagies {
+		var imageMainUrl string
+		if storage.ImageMain != nil && *storage.ImageMain != "" {
+			urlImage, err := s.ImageService.GetImageKey(ctx, *storage.ImageMain)
+			if err == nil && urlImage != nil {
+				imageMainUrl = urlImage.Url
+			}
+		}
+
+		var imageMapUrl string
+		if storage.ImageMain != nil && *storage.ImageMap != "" {
+			urlImage, err := s.ImageService.GetImageKey(ctx, *storage.ImageMap)
+			if err == nil && urlImage != nil {
+				imageMapUrl = urlImage.Url
+			}
+		}
+
 		nodeMap[storage.ID.Hex()] = &StorageNodeResponse{
-			Storage:  *storage,
-			Children: []*StorageNodeResponse{},
+			Storage:      *storage,
+			ImageMainUrl: imageMainUrl,
+			ImageMapUrl:  imageMapUrl,
+			Children:     []*StorageNodeResponse{},
 		}
 	}
 
@@ -179,12 +200,14 @@ func (s *storageService) GetStorageTree(ctx context.Context) ([]*StorageNodeResp
 		if storage.ParentID == nil {
 			roots = append(roots, nodeMap[storage.ID.Hex()])
 		} else {
-			nodeMap[storage.ParentID.Hex()].Children = append(nodeMap[storage.ParentID.Hex()].Children, nodeMap[storage.ID.Hex()])
+			parentNode, ok := nodeMap[storage.ParentID.Hex()]
+			if ok {
+				parentNode.Children = append(parentNode.Children, nodeMap[storage.ID.Hex()])
+			}
 		}
 	}
 
 	return roots, nil
-
 }
 
 func (s *storageService) UpdateStorage(ctx context.Context, id string, req *UpdateStorageRequest) error {
@@ -220,10 +243,21 @@ func (s *storageService) UpdateStorage(ctx context.Context, id string, req *Upda
 	}
 
 	if req.ImageMain != nil {
+		if storage.ImageMain != nil {
+			fmt.Printf("storage.ImageMain: %v\n", *storage.ImageMain)
+			if err := s.ImageService.DeleteImageKey(ctx, *storage.ImageMain); err != nil {
+				return err
+			}
+		}
 		storage.ImageMain = req.ImageMain
 	}
 
 	if req.ImageMap != nil {
+		if storage.ImageMap != nil {
+			if err := s.ImageService.DeleteImageKey(ctx, *storage.ImageMap); err != nil {
+				return err
+			}
+		}
 		storage.ImageMap = req.ImageMap
 	}
 
@@ -286,6 +320,26 @@ func (s *storageService) DeleteStorage(ctx context.Context, id string) error {
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
+	}
+
+	storage, err := s.repository.GetStorageByID(ctx, &objectID)
+	if err != nil {
+		return err
+	}
+
+	if storage == nil {
+		return fmt.Errorf("storage not found")
+	}
+
+	if storage.ImageMain != nil {
+		if err := s.ImageService.DeleteImageKey(ctx, *storage.ImageMain); err != nil {
+			return err
+		}
+	}
+	if storage.ImageMap != nil {
+		if err := s.ImageService.DeleteImageKey(ctx, *storage.ImageMap); err != nil {
+			return err
+		}
 	}
 
 	return s.repository.DeleteStorage(ctx, objectID)

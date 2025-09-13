@@ -164,7 +164,7 @@ func (c *callAPI) getImageKey(key string, token string) (map[string]interface{},
 		fmt.Printf("Error calling API: %v\n", err)
 		return nil, err
 	}
-
+	fmt.Printf("res: %v\n", res)
 	var imageData interface{}
 
 	err = json.Unmarshal([]byte(res), &imageData)
