@@ -163,6 +163,7 @@ func (s *storageService) GetStorageByID(ctx context.Context, id string) (*Storag
 }
 
 func (s *storageService) GetStorageTree(ctx context.Context) ([]*StorageNodeResponse, error) {
+
 	storagies, err := s.repository.GetAllStoragies(ctx)
 	if err != nil {
 		return nil, err
@@ -176,6 +177,8 @@ func (s *storageService) GetStorageTree(ctx context.Context) ([]*StorageNodeResp
 			urlImage, err := s.ImageService.GetImageKey(ctx, *storage.ImageMain)
 			if err == nil && urlImage != nil {
 				imageMainUrl = urlImage.Url
+			} else {
+				imageMainUrl = ""
 			}
 		}
 
@@ -184,6 +187,8 @@ func (s *storageService) GetStorageTree(ctx context.Context) ([]*StorageNodeResp
 			urlImage, err := s.ImageService.GetImageKey(ctx, *storage.ImageMap)
 			if err == nil && urlImage != nil {
 				imageMapUrl = urlImage.Url
+			} else {
+				imageMapUrl = ""
 			}
 		}
 
@@ -244,7 +249,6 @@ func (s *storageService) UpdateStorage(ctx context.Context, id string, req *Upda
 
 	if req.ImageMain != nil {
 		if storage.ImageMain != nil {
-			fmt.Printf("storage.ImageMain: %v\n", *storage.ImageMain)
 			if err := s.ImageService.DeleteImageKey(ctx, *storage.ImageMain); err != nil {
 				return err
 			}
