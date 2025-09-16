@@ -96,6 +96,7 @@ func (s *shelfTypeService) GetShelfTypes(ctx context.Context) ([]*ShelfTypeRespo
 		shelfTypes = append(shelfTypes, &ShelfTypeResponse{
 			ID:        shelf.ID,
 			ImageUrl:  imageUrl,
+			ImageKey:  shelf.ImageKey,
 			Name:      shelf.Name,
 			Note:      shelf.Note,
 			Slot:      shelf.Slot,
@@ -145,6 +146,7 @@ func (s *shelfTypeService) GetShelfTypeByID(ctx context.Context, id string) (*Sh
 	shelfType := &ShelfTypeResponse{
 		ID:        shelf.ID,
 		ImageUrl:  imageUrl,
+		ImageKey:  shelf.ImageKey,
 		Name:      shelf.Name,
 		Note:      shelf.Note,
 		Slot:      shelf.Slot,
@@ -182,7 +184,7 @@ func (s *shelfTypeService) UpdateShelfType(ctx context.Context, id string, req *
 		err := s.ImageService.DeleteImageKey(ctx, shelfType.ImageKey)
 		if err != nil {
 			return err
-		} 
+		}
 
 		shelfType.ImageKey = req.ImageKey
 	}
