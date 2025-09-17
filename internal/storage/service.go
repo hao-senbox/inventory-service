@@ -83,6 +83,7 @@ func (s *storageService) CreateStorage(ctx context.Context, req *CreateStorageRe
 			ID:          ID,
 			Name:        req.Name,
 			Type:        req.Type,
+			ShelfID:     req.ShelfID,
 			QRCode:      qrCode,
 			Description: &req.Description,
 			ImageMain:   req.ImageMain,
@@ -183,7 +184,7 @@ func (s *storageService) GetStorageTree(ctx context.Context) ([]*StorageNodeResp
 		}
 
 		var imageMapUrl string
-		if storage.ImageMain != nil && *storage.ImageMap != "" {
+		if storage.ImageMap != nil && *storage.ImageMap != "" {
 			urlImage, err := s.ImageService.GetImageKey(ctx, *storage.ImageMap)
 			if err == nil && urlImage != nil {
 				imageMapUrl = urlImage.Url
