@@ -83,6 +83,7 @@ func (s *storageService) CreateStorage(ctx context.Context, req *CreateStorageRe
 			ID:          ID,
 			Name:        req.Name,
 			Type:        req.Type,
+			ShelfID:     req.ShelfID,
 			QRCode:      qrCode,
 			Description: &req.Description,
 			ImageMain:   req.ImageMain,
