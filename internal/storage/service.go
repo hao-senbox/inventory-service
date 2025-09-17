@@ -183,7 +183,7 @@ func (s *storageService) GetStorageTree(ctx context.Context) ([]*StorageNodeResp
 		}
 
 		var imageMapUrl string
-		if storage.ImageMain != nil && *storage.ImageMap != "" {
+		if storage.ImageMap != nil && *storage.ImageMap != "" {
 			urlImage, err := s.ImageService.GetImageKey(ctx, *storage.ImageMap)
 			if err == nil && urlImage != nil {
 				imageMapUrl = urlImage.Url
