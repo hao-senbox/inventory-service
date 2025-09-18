@@ -21,6 +21,7 @@ type UpdateStorageRequest struct {
 	ImageMap    *string `json:"map_image"`
 	ParentID    *string `json:"parent_id"`
 	ShelfTypeID *string `json:"shelf_type_id"`
+	ShelfID     *string `json:"shelf_id"`
 	Slots       *int    `json:"slots"`
 	Levels      *int    `json:"levels"`
 }

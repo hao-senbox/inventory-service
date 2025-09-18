@@ -281,6 +281,10 @@ func (s *storageService) UpdateStorage(ctx context.Context, id string, req *Upda
 		}
 	}
 
+	if req.ShelfID != nil {
+		storage.ShelfID = req.ShelfID
+	}
+
 	if req.ShelfTypeID != nil {
 		shelfTypeID, err := primitive.ObjectIDFromHex(*req.ShelfTypeID)
 		if err != nil {
