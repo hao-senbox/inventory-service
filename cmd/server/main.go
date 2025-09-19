@@ -8,6 +8,7 @@ import (
 	// "inventory-service/internal/product"
 	productplacement "inventory-service/internal/product_placement"
 	producttransaction "inventory-service/internal/product_transaction"
+	shelfquantity "inventory-service/internal/shelf_quantity"
 	shelftype "inventory-service/internal/shelf_type"
 	"inventory-service/internal/storage"
 	"inventory-service/pkg/consul"
@@ -81,10 +82,15 @@ func main() {
 	storageCollection := mongoClient.Database(cfg.MongoDB).Collection("storage")
 	productTransaction := mongoClient.Database(cfg.MongoDB).Collection("product_transaction")
 	productPlacement := mongoClient.Database(cfg.MongoDB).Collection("product_placement")
+	shelfQuantityCollection := mongoClient.Database(cfg.MongoDB).Collection("shelf_quantity")
 	shelfTypeRepository := shelftype.NewShelfTypeRepository(shelfTypeCollection)
 	storageRepository := storage.NewStorageRepository(storageCollection)
 	productTransactionRepository := producttransaction.NewProductTransactionRepository(productTransaction)
 	productPlacementRepository := productplacement.NewProductPlacementRepository(productPlacement)
+
+	shelfQuantityRepository := shelfquantity.NewShelfQuantityRepository(shelfQuantityCollection)
+	shelfQuantityService := shelfquantity.NewShelfQuantityService(shelfQuantityRepository, storageRepository)
+	shelfQuantityHandler := shelfquantity.NewShelfQuantityHandler(shelfQuantityService)
 
 	shelfTypeService := shelftype.NewShelfTypeService(shelfTypeRepository, storageRepository, imageService)
 	shelfTypeHandler := shelftype.NewShelfTypeHandler(shelfTypeService)
@@ -94,14 +100,16 @@ func main() {
 	storageHandler := storage.NewStorageHandler(storageService)
 
 	productPlacementService := productplacement.NewProductPlacementService(productPlacementRepository, storageRepository)
-
+	productPlacementHandler := productplacement.NewProductPlacementHandler(productPlacementService)
 	productTransactionService := producttransaction.NewProductTransactionService(productTransactionRepository, productPlacementService, mongoClient)
 	productTransactionHandler := producttransaction.NewProductTransactionHandler(productTransactionService)
 
 	r := gin.Default()
 	shelftype.RegisterRoutes(r, shelfTypeHandler)
 	storage.RegisterRoutes(r, storageHandler)
+	productplacement.RegisterRoutes(r, productPlacementHandler)
 	producttransaction.RegisterRoutes(r, productTransactionHandler)
+	shelfquantity.RegisterRoutes(r, shelfQuantityHandler)
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8009"
