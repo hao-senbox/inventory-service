@@ -55,6 +55,9 @@ func (r *storageRepository) GetStorageByID(ctx context.Context, id *primitive.Ob
 
 	err := r.storageCollection.FindOne(ctx, filter).Decode(&storage)
 	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, nil
+		}
 		return nil, err
 	}
 
