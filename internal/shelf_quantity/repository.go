@@ -11,6 +11,8 @@ import (
 type ShelfQuantityRepository interface {
 	CreateShelfQuantity(ctx context.Context, item *ShelfQuantity, userID string) error
 	GetShelfQuantitiesByShelfID(ctx context.Context, shelfID primitive.ObjectID) ([]*ShelfQuantity, error)
+
+	DeleteQuantity(ctx context.Context, id primitive.ObjectID) error
 }
 
 type shelfQuantityRepository struct {
@@ -47,5 +49,18 @@ func (r *shelfQuantityRepository) GetShelfQuantitiesByShelfID(ctx context.Contex
 	}
 
 	return shelfQuantities, nil
+	
+}
+
+func (r *shelfQuantityRepository) DeleteQuantity(ctx context.Context, id primitive.ObjectID) error {
+
+	filter := bson.M{"shelf_id": id}
+	
+	_, err := r.ShelfQuantityCollection.DeleteMany(ctx, filter)
+	if err != nil {
+		return err
+	}
+
+	return nil
 	
 }

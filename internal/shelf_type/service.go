@@ -240,9 +240,20 @@ func (s *shelfTypeService) DeleteShelfType(ctx context.Context, id string) error
 		return fmt.Errorf("shelf type not found")
 	}
 
-	err = s.ImageService.DeleteImageKey(ctx, shelf.ImageKey)
+	check, err := s.StorageRepo.CheckShelfType(ctx, objectID)
 	if err != nil {
 		return err
+	}
+
+	if check {
+		return fmt.Errorf("shelf type has storages")
+	}
+
+	if shelf.ImageKey != "" {
+		err := s.ImageService.DeleteImageKey(ctx, shelf.ImageKey)
+		if err != nil {
+			return err
+		}
 	}
 
 	storagies, err := s.StorageRepo.GetStorageByShelfID(ctx, objectID)

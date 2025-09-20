@@ -3,6 +3,8 @@ package storage
 import (
 	"context"
 	"fmt"
+	"inventory-service/internal/shared/model"
+	shelfquantity "inventory-service/internal/shelf_quantity"
 	shelftype "inventory-service/internal/shelf_type"
 	"inventory-service/pkg/uploader"
 	"time"
@@ -13,7 +15,7 @@ import (
 type StorageService interface {
 	CreateStorage(ctx context.Context, req *CreateStorageRequest, userID string) (string, error)
 	GetStoragies(ctx context.Context, typeString string) (map[string][]*Storage, error)
-	GetStorageByID(ctx context.Context, id string) (*Storage, error)
+	GetStorageByID(ctx context.Context, id string) (*model.Storage, error)
 	GetStorageTree(ctx context.Context) ([]*StorageNodeResponse, error)
 	UpdateStorage(ctx context.Context, id string, req *UpdateStorageRequest) error
 	DeleteStorage(ctx context.Context, id string) error
@@ -22,13 +24,15 @@ type StorageService interface {
 type storageService struct {
 	repository          StorageRepository
 	shelfTypeRepository shelftype.ShelfTypeRepository
+	shelfQuantityRepo   shelfquantity.ShelfQuantityRepository
 	ImageService        uploader.ImageService
 }
 
-func NewStorageService(repository StorageRepository, shelfTypeRepository shelftype.ShelfTypeRepository, imageService uploader.ImageService) StorageService {
+func NewStorageService(repository StorageRepository, shelfTypeRepository shelftype.ShelfTypeRepository, shelfQuantityRepo shelfquantity.ShelfQuantityRepository, imageService uploader.ImageService) StorageService {
 	return &storageService{
 		repository:          repository,
 		shelfTypeRepository: shelfTypeRepository,
+		shelfQuantityRepo:   shelfQuantityRepo,
 		ImageService:        imageService,
 	}
 }
@@ -56,7 +60,7 @@ func (s *storageService) CreateStorage(ctx context.Context, req *CreateStorageRe
 	ID := primitive.NewObjectID()
 	qrCode := fmt.Sprintf("SENBOX.ORG[STORAGE]:%s", ID.Hex())
 
-	var storage *Storage
+	var storage *model.Storage
 
 	if req.ShelfTypeID != nil {
 		ShelfTypeIDConvert, err := primitive.ObjectIDFromHex(*req.ShelfTypeID)
@@ -79,7 +83,7 @@ func (s *storageService) CreateStorage(ctx context.Context, req *CreateStorageRe
 			totalStock = &val
 		}
 
-		storage = &Storage{
+		storage = &model.Storage{
 			ID:          ID,
 			Name:        req.Name,
 			Type:        req.Type,
@@ -99,7 +103,7 @@ func (s *storageService) CreateStorage(ctx context.Context, req *CreateStorageRe
 			UpdatedAt:   time.Now(),
 		}
 	} else {
-		storage = &Storage{
+		storage = &model.Storage{
 			ID:          ID,
 			Name:        req.Name,
 			Type:        req.Type,
@@ -127,7 +131,7 @@ func (s *storageService) CreateStorage(ctx context.Context, req *CreateStorageRe
 	return storageID, nil
 }
 
-func (s *storageService) buildLocationHierarchy(ctx context.Context, storage *Storage) error {
+func (s *storageService) buildLocationHierarchy(ctx context.Context, storage *model.Storage) error {
 
 	if storage.ParentID == nil {
 		storage.Level = 0
@@ -152,7 +156,7 @@ func (s *storageService) GetStoragies(ctx context.Context, typeString string) (m
 	return s.repository.GetStoragies(ctx, typeString)
 }
 
-func (s *storageService) GetStorageByID(ctx context.Context, id string) (*Storage, error) {
+func (s *storageService) GetStorageByID(ctx context.Context, id string) (*model.Storage, error) {
 
 	objectID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -336,8 +340,24 @@ func (s *storageService) DeleteStorage(ctx context.Context, id string) error {
 		return err
 	}
 
+	check, err := s.repository.CheckParentID(ctx, objectID)
+
+	if err != nil {
+		return err
+	}
+
+	if check {
+		return fmt.Errorf("storage has children")
+	}
+
 	if storage == nil {
 		return fmt.Errorf("storage not found")
+	}
+
+	if storage.ShelfID != nil {
+		if err := s.shelfQuantityRepo.DeleteQuantity(ctx, storage.ID); err != nil {
+			return err
+		}
 	}
 
 	if storage.ImageMain != nil {

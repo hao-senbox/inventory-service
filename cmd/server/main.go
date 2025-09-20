@@ -96,7 +96,7 @@ func main() {
 	shelfTypeHandler := shelftype.NewShelfTypeHandler(shelfTypeService)
 
 	// productService := product.NewProductService(consulClient)
-	storageService := storage.NewStorageService(storageRepository, shelfTypeRepository, imageService)
+	storageService := storage.NewStorageService(storageRepository, shelfTypeRepository, shelfQuantityRepository, imageService)
 	storageHandler := storage.NewStorageHandler(storageService)
 
 	productPlacementService := productplacement.NewProductPlacementService(productPlacementRepository, storageRepository)
