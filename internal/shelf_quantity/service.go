@@ -3,7 +3,7 @@ package shelfquantity
 import (
 	"context"
 	"fmt"
-	"inventory-service/internal/storage"
+	"inventory-service/internal/shared/ports"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -16,11 +16,11 @@ type ShelfQuantityService interface {
 
 type shelfQuantityService struct {
 	ShelfQuantityRepository ShelfQuantityRepository
-	StorageRepository       storage.StorageRepository
+	StorageRepository       ports.Storage
 }
 
 func NewShelfQuantityService(shelfQuantityRepository ShelfQuantityRepository,
-	storageRepository storage.StorageRepository) ShelfQuantityService {
+	storageRepository ports.Storage) ShelfQuantityService {
 	return &shelfQuantityService{
 		ShelfQuantityRepository: shelfQuantityRepository,
 		StorageRepository:       storageRepository,

@@ -10,16 +10,18 @@ import (
 )
 
 type StorageRepository interface {
-	AddStorage(ctx context.Context, storage *Storage) (string, error)
+	AddStorage(ctx context.Context, storage *model.Storage) (string, error)
 	GetStoragies(ctx context.Context, typeString string) (map[string][]*Storage, error)
 	GetAllStoragies(ctx context.Context) ([]*Storage, error)
-	GetStorageByID(ctx context.Context, id *primitive.ObjectID) (*Storage, error)
+	GetStorageByID(ctx context.Context, id *primitive.ObjectID) (*model.Storage, error)
 	GetStorageByShelfID(ctx context.Context, id primitive.ObjectID) ([]*model.Storage, error)
-	UpdateStorage(ctx context.Context, id primitive.ObjectID, storage *Storage) error
+	UpdateStorage(ctx context.Context, id primitive.ObjectID, storage *model.Storage) error
 	DeleteStorage(ctx context.Context, id primitive.ObjectID) error
 
 	// Update total stock
 	UpdateTotalStock(ctx context.Context, id primitive.ObjectID, totalStock int) error
+	CheckParentID(ctx context.Context, parentID primitive.ObjectID) (bool, error)
+	CheckShelfType(ctx context.Context, shelf_type_id primitive.ObjectID) (bool, error)
 }
 
 type storageRepository struct {
@@ -32,7 +34,7 @@ func NewStorageRepository(storageCollection *mongo.Collection) StorageRepository
 	}
 }
 
-func (r *storageRepository) AddStorage(ctx context.Context, storage *Storage) (string, error) {
+func (r *storageRepository) AddStorage(ctx context.Context, storage *model.Storage) (string, error) {
 
 	result, err := r.storageCollection.InsertOne(ctx, storage)
 	if err != nil {
@@ -44,9 +46,9 @@ func (r *storageRepository) AddStorage(ctx context.Context, storage *Storage) (s
 	return oid.Hex(), err
 }
 
-func (r *storageRepository) GetStorageByID(ctx context.Context, id *primitive.ObjectID) (*Storage, error) {
+func (r *storageRepository) GetStorageByID(ctx context.Context, id *primitive.ObjectID) (*model.Storage, error) {
 
-	var storage Storage
+	var storage model.Storage
 
 	filter := bson.M{
 		"_id":       id,
@@ -88,7 +90,6 @@ func (r *storageRepository) GetStoragies(ctx context.Context, typeString string)
 	}
 	defer cursor.Close(ctx)
 
-
 	typeMap := map[string]string{
 		"warehouse": "warehouses",
 		"building":  "buildings",
@@ -122,7 +123,7 @@ func (r *storageRepository) GetStoragies(ctx context.Context, typeString string)
 	}
 
 	return results, nil
-	
+
 }
 
 func (r *storageRepository) GetAllStoragies(ctx context.Context) ([]*Storage, error) {
@@ -131,7 +132,7 @@ func (r *storageRepository) GetAllStoragies(ctx context.Context) ([]*Storage, er
 	if err != nil {
 		return nil, err
 	}
-	
+
 	defer cursor.Close(ctx)
 
 	var storagies []*Storage
@@ -148,7 +149,7 @@ func (r *storageRepository) GetAllStoragies(ctx context.Context) ([]*Storage, er
 
 }
 
-func (r *storageRepository) UpdateStorage(ctx context.Context, id primitive.ObjectID, storage *Storage) error {
+func (r *storageRepository) UpdateStorage(ctx context.Context, id primitive.ObjectID, storage *model.Storage) error {
 
 	_, err := r.storageCollection.UpdateOne(ctx, bson.M{"_id": id}, bson.M{"$set": storage})
 	if err != nil {
@@ -167,7 +168,7 @@ func (r *storageRepository) DeleteStorage(ctx context.Context, id primitive.Obje
 	}
 
 	return nil
-	
+
 }
 
 func (r *storageRepository) GetStorageByShelfID(ctx context.Context, id primitive.ObjectID) ([]*model.Storage, error) {
@@ -202,4 +203,32 @@ func (r *storageRepository) UpdateTotalStock(ctx context.Context, id primitive.O
 	}
 
 	return nil
+}
+
+func (r *storageRepository) CheckParentID(ctx context.Context, parentID primitive.ObjectID) (bool, error) {
+
+	count, err := r.storageCollection.CountDocuments(ctx, bson.M{"parent_id": parentID})
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+func (r *storageRepository) CheckShelfType(ctx context.Context, shelf_type_id primitive.ObjectID) (bool, error) {
+
+	filter := bson.M{"shelf_type_id": shelf_type_id}
+
+	var result bson.M
+	
+	err := r.storageCollection.FindOne(ctx, filter).Decode(&result)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
+
 }
