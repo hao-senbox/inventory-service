@@ -28,7 +28,7 @@ func SendSuccess(c *gin.Context, statusCode int, message string, data interface{
 func SendError( c* gin.Context, statusCode int, err error, errorCode string) {
 	c.JSON(statusCode, APIResponse {
 		StatusCode: statusCode,
-		Error: err.Error(),
+		Message: err.Error(),
 		ErrorCode: errorCode,
 	})
 }
