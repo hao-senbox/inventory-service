@@ -59,6 +59,10 @@ func main() {
 		panic(err)
 	}
 
+	if err := waitPassing(consulClient, "go-main-service", 60*time.Second); err != nil {
+		panic(err)
+	}
+
 	defer func() {
 		if err := mongoClient.Disconnect(context.Background()); err != nil {
 			panic(err)
