@@ -8,6 +8,7 @@ import (
 	"inventory-service/pkg/consul"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/hashicorp/consul/api"
 )
@@ -52,10 +53,19 @@ func NewServiceAPI(client *api.Client, serviceName string) *callAPI {
 		return nil
 	}
 
-	service, err := sd.DiscoverService()
-	if err != nil {
-		fmt.Printf("Error discovering service: %v\n", err)
-		return nil
+	var service *api.CatalogService
+
+	for i := 0; i < 10; i++ {
+		service, err = sd.DiscoverService()
+		if err == nil && service != nil {
+			break
+		}
+		fmt.Printf("Waiting for service %s... retry %d/10\n", serviceName, i+1)
+		time.Sleep(3 * time.Second)
+	}
+
+	if service == nil {
+		fmt.Printf("Service %s not found after retries, continuing anyway...\n", serviceName)
 	}
 
 	if os.Getenv("LOCAL_TEST") == "true" {
@@ -113,7 +123,7 @@ func (s *imageService) DeleteImageKey(ctx context.Context, key string) error {
 
 }
 
-func (c *callAPI) deleleImage(key string, token string) (error) {
+func (c *callAPI) deleleImage(key string, token string) error {
 
 	endpoint := "/v1/images/delete"
 
@@ -123,7 +133,7 @@ func (c *callAPI) deleleImage(key string, token string) (error) {
 	}
 
 	body := map[string]string{
-		"key":  key,
+		"key": key,
 	}
 
 	jsonBody, err := json.Marshal(body)
